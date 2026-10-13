@@ -17,6 +17,12 @@
       --green: #22c55e;
       --blue: #3b82f6;
       --amber: #f59e0b;
+
+      /* Abstract Voice Orb CSS Variables (Dynamically updated via state) */
+      --orb-color: #38bdf8;
+      --orb-glow: rgba(56, 189, 248, 0.65);
+      --orb-glow-far: rgba(56, 189, 248, 0.25);
+      --orb-gradient: radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 65%, #0f172a 100%);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,7 +33,7 @@
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
     }
     header {
       display: flex;
@@ -41,7 +47,7 @@
       align-items: center;
       gap: 12px;
     }
-    .brand h1 { font-size: 20px; font-weight: 700; }
+    .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
     .brand span { color: var(--accent); }
     .status-pill {
       display: inline-flex;
@@ -62,12 +68,219 @@
       background: var(--text-muted);
     }
     .status-listening .pulse-dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-    .status-recording .pulse-dot { background: var(--amber); box-shadow: 0 0 12px var(--amber); animation: pulse 1s infinite; }
+    .status-recording .pulse-dot { background: var(--amber); box-shadow: 0 0 14px var(--amber); animation: pulse 0.8s infinite; }
     .status-inference .pulse-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(1.3); }
     }
+
+    /* Abstract Voice Orb Hero Card */
+    .orb-card {
+      background: radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.95), #111827 90%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    .orb-top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .orb-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .orb-tag {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .orb-tag.active {
+      color: var(--orb-color);
+      border-color: var(--orb-color);
+      box-shadow: 0 0 8px var(--orb-glow);
+    }
+    .mic-test-btn {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: #334155;
+      border: 1px solid #475569;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .mic-test-btn:hover {
+      background: #475569;
+      border-color: #64748b;
+    }
+    .mic-test-btn.active {
+      background: #0369a1;
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Abstract Orb Stage & Visualizer */
+    .orb-stage {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .orb-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    /* Outer atmospheric aura */
+    .orb-aura {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: var(--orb-glow);
+      filter: blur(40px);
+      opacity: 0.7;
+      transition: background 0.4s ease, opacity 0.3s ease;
+      pointer-events: none;
+      will-change: transform;
+    }
+    /* Concentric celestial rotating rings */
+    .orb-ring-outer {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 1.5px dashed var(--orb-color);
+      opacity: 0.55;
+      animation: spin-clockwise 22s linear infinite;
+      pointer-events: none;
+      transition: border-color 0.4s ease;
+      will-change: transform;
+    }
+    .orb-ring-mid {
+      position: absolute;
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      border: 1.5px solid var(--orb-color);
+      opacity: 0.4;
+      animation: spin-counter 14s linear infinite;
+      pointer-events: none;
+      transition: border-color 0.4s ease;
+      will-change: transform;
+    }
+    .orb-ring-inner {
+      position: absolute;
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      border: 2px solid var(--orb-color);
+      opacity: 0.7;
+      pointer-events: none;
+      transition: border-color 0.4s ease;
+      will-change: transform;
+    }
+    /* The Core Sphere */
+    .orb-core {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--orb-gradient);
+      box-shadow: 0 0 35px var(--orb-glow), 0 0 70px var(--orb-glow-far), inset 0 0 16px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+      will-change: transform;
+      z-index: 2;
+    }
+    .orb-icon {
+      width: 28px;
+      height: 28px;
+      opacity: 0.9;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+      transition: transform 0.3s ease;
+    }
+
+    @keyframes spin-clockwise {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spin-counter {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    /* Orb Caption & Energy Bar */
+    .orb-bottom-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .orb-caption {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--orb-color);
+      text-transform: uppercase;
+      transition: color 0.4s ease;
+      text-align: center;
+    }
+    .orb-level-track {
+      width: 100%;
+      max-width: 420px;
+      height: 6px;
+      background: #0f172a;
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .orb-level-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--orb-color);
+      box-shadow: 0 0 10px var(--orb-color);
+      transition: width 0.1s linear, background 0.4s ease;
+    }
+
+    /* Dashboard Grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -82,16 +295,10 @@
       flex-direction: column;
       gap: 16px;
     }
-    .card-title {
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
+
     /* Command Card */
     .intent-display {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       color: #38bdf8;
       word-break: break-all;
@@ -118,6 +325,7 @@
       width: 0%;
       transition: width 0.4s ease;
     }
+
     /* LED Indicators */
     .leds-container {
       display: flex;
@@ -165,6 +373,7 @@
       font-family: 'JetBrains Mono', monospace;
       color: var(--text);
     }
+
     /* Music Card */
     .music-state {
       display: flex;
@@ -175,12 +384,13 @@
       font-size: 16px;
       font-weight: 600;
     }
+
     /* History table */
     .history-card {
       grid-column: 1 / -1;
     }
     .history-list {
-      max-height: 240px;
+      max-height: 220px;
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
@@ -212,6 +422,47 @@
       <span id="statusText">LISTENING FOR "BETELGEUSE"</span>
     </div>
   </header>
+
+  <!-- Abstract Voice Indicator Orb Hero Card -->
+  <div class="orb-card">
+    <div class="orb-top-bar">
+      <div class="card-title">Live Acoustic Activity & Voice Orb</div>
+      <div class="orb-btn-group">
+        <span id="streamSourceTag" class="orb-tag active">Edge Mic: Connected</span>
+        <button id="toggleBrowserMicBtn" class="mic-test-btn" type="button" title="Test with your laptop microphone directly">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          </svg>
+          <span id="browserMicText">Browser Mic Test</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- The Abstract Dynamic Circle Visualizer -->
+    <div class="orb-stage">
+      <div class="orb-container" id="voiceOrbContainer" title="Click to trigger test pulse">
+        <div class="orb-aura" id="orbAura"></div>
+        <div class="orb-ring-outer" id="orbRingOuter"></div>
+        <div class="orb-ring-mid" id="orbRingMid"></div>
+        <div class="orb-ring-inner" id="orbRingInner"></div>
+        <div class="orb-core" id="orbCore">
+          <svg class="orb-icon" id="orbIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="orb-bottom-bar">
+      <div class="orb-caption" id="orbCaption">STANDBY // LISTENING FOR "BETELGEUSE"</div>
+      <div class="orb-level-track">
+        <div class="orb-level-fill" id="orbLevelFill"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="grid">
     <!-- Recognized Command Card -->
@@ -301,12 +552,186 @@
   </div>
 
   <script>
+    // State variables
+    let currentVoiceState = "LISTENING";
+    let edgeAudioLevel = 0.0;
+    let localAudioLevel = 0.0;
+    let smoothedLevel = 0.0;
+    let useBrowserMic = false;
+    let browserAudioContext = null;
+    let browserAnalyser = null;
+    let browserDataArray = null;
+
+    // Elements
+    const orbCore = document.getElementById('orbCore');
+    const orbAura = document.getElementById('orbAura');
+    const orbRingOuter = document.getElementById('orbRingOuter');
+    const orbRingMid = document.getElementById('orbRingMid');
+    const orbRingInner = document.getElementById('orbRingInner');
+    const orbCaption = document.getElementById('orbCaption');
+    const orbLevelFill = document.getElementById('orbLevelFill');
+    const toggleBrowserMicBtn = document.getElementById('toggleBrowserMicBtn');
+    const browserMicText = document.getElementById('browserMicText');
+    const streamSourceTag = document.getElementById('streamSourceTag');
+    const voiceOrbContainer = document.getElementById('voiceOrbContainer');
+
+    // Color definitions for assistant states
+    const STATE_COLORS = {
+      LISTENING: {
+        color: '#38bdf8',
+        glow: 'rgba(56, 189, 248, 0.65)',
+        glowFar: 'rgba(56, 189, 248, 0.25)',
+        gradient: 'radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 65%, #0f172a 100%)',
+        caption: 'STANDBY // LISTENING FOR "BETELGEUSE"'
+      },
+      RECORDING: {
+        // Glowing warm amber / gold after hearing wakeword
+        color: '#f59e0b',
+        glow: 'rgba(245, 158, 11, 0.85)',
+        glowFar: 'rgba(245, 158, 11, 0.45)',
+        gradient: 'radial-gradient(circle at 35% 35%, #fbbf24 0%, #f59e0b 60%, #b45309 100%)',
+        caption: 'WAKE WORD DETECTED // LISTENING FOR COMMAND...'
+      },
+      INFERENCE: {
+        // Emerald green during inference analysis
+        color: '#22c55e',
+        glow: 'rgba(34, 197, 94, 0.85)',
+        glowFar: 'rgba(34, 197, 94, 0.35)',
+        gradient: 'radial-gradient(circle at 35% 35%, #4ade80 0%, #16a34a 60%, #14532d 100%)',
+        caption: 'ANALYZING COMMAND (ONNX INT8)...'
+      }
+    };
+
+    function updateOrbState(state) {
+      currentVoiceState = state;
+      const theme = STATE_COLORS[state] || STATE_COLORS.LISTENING;
+      document.documentElement.style.setProperty('--orb-color', theme.color);
+      document.documentElement.style.setProperty('--orb-glow', theme.glow);
+      document.documentElement.style.setProperty('--orb-glow-far', theme.glowFar);
+      document.documentElement.style.setProperty('--orb-gradient', theme.gradient);
+      orbCaption.textContent = theme.caption;
+
+      // Update header status pill
+      const pill = document.getElementById('statusPill');
+      const txt = document.getElementById('statusText');
+      pill.className = "status-pill status-" + state.toLowerCase();
+      txt.textContent = theme.caption;
+    }
+
+    // Animation Render Loop
+    function renderOrbVisualizer() {
+      // 1. Determine active raw level
+      let rawLevel = 0.0;
+      if (useBrowserMic && browserAnalyser) {
+        browserAnalyser.getByteTimeDomainData(browserDataArray);
+        let sumSq = 0;
+        for (let i = 0; i < browserDataArray.length; i++) {
+          const norm = (browserDataArray[i] - 128) / 128;
+          sumSq += norm * norm;
+        }
+        const rms = Math.sqrt(sumSq / browserDataArray.length);
+        rawLevel = Math.min(1.0, Math.max(0.0, (rms - 0.01) * 7.0));
+      } else {
+        rawLevel = edgeAudioLevel;
+      }
+
+      // 2. Responsive smoothing (fast attack, smooth organic decay)
+      if (rawLevel > smoothedLevel) {
+        smoothedLevel += (rawLevel - smoothedLevel) * 0.35; // fast attack on speech
+      } else {
+        smoothedLevel += (rawLevel - smoothedLevel) * 0.12; // gentle release
+      }
+
+      // Idle breathing wave when silent (so orb never looks dead)
+      const idleBreathing = 0.03 * Math.sin(Date.now() / 600);
+      const effectiveLevel = Math.max(0.0, smoothedLevel + idleBreathing);
+
+      // 3. Dynamic scale calculations:
+      // Minimal or no sound: circle is small (scale ~0.75)
+      // Large sound: expands significantly up to scale ~2.45
+      const baseScale = 0.75 + (effectiveLevel * 1.70);
+      const auraScale = baseScale * 1.45;
+      const outerRingScale = baseScale * 1.55;
+      const midRingScale = baseScale * 1.30;
+      const innerRingScale = baseScale * 1.12;
+
+      // Apply GPU-accelerated transforms
+      orbCore.style.transform = `scale(${baseScale.toFixed(3)})`;
+      orbAura.style.transform = `scale(${auraScale.toFixed(3)})`;
+      orbRingOuter.style.transform = `scale(${outerRingScale.toFixed(3)})`;
+      orbRingMid.style.transform = `scale(${midRingScale.toFixed(3)})`;
+      orbRingInner.style.transform = `scale(${innerRingScale.toFixed(3)})`;
+
+      // Update energy level bar
+      const pct = Math.min(100, Math.round(smoothedLevel * 100));
+      orbLevelFill.style.width = pct + "%";
+
+      requestAnimationFrame(renderOrbVisualizer);
+    }
+    requestAnimationFrame(renderOrbVisualizer);
+
+    // Interactive click simulation for instant testing
+    voiceOrbContainer.addEventListener('click', () => {
+      edgeAudioLevel = 0.95;
+      // Cycle state on click for interactive demonstration
+      if (currentVoiceState === "LISTENING") {
+        updateOrbState("RECORDING");
+      } else if (currentVoiceState === "RECORDING") {
+        updateOrbState("INFERENCE");
+      } else {
+        updateOrbState("LISTENING");
+      }
+      setTimeout(() => { edgeAudioLevel = 0.0; }, 400);
+    });
+
+    // Browser Microphone Integration (for testing directly on laptop browser)
+    toggleBrowserMicBtn.addEventListener('click', async () => {
+      if (!useBrowserMic) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          browserAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = browserAudioContext.createMediaStreamSource(stream);
+          browserAnalyser = browserAudioContext.createAnalyser();
+          browserAnalyser.fftSize = 512;
+          browserDataArray = new Uint8Array(browserAnalyser.frequencyBinCount);
+          source.connect(browserAnalyser);
+
+          useBrowserMic = true;
+          toggleBrowserMicBtn.classList.add('active');
+          browserMicText.textContent = "Using Laptop Mic";
+          streamSourceTag.textContent = "Source: Browser Mic";
+          streamSourceTag.classList.add('active');
+        } catch (err) {
+          alert("Could not access microphone: " + err.message);
+        }
+      } else {
+        useBrowserMic = false;
+        toggleBrowserMicBtn.classList.remove('active');
+        browserMicText.textContent = "Browser Mic Test";
+        streamSourceTag.textContent = "Source: Edge Controller Mic";
+      }
+    });
+
+    // Server-Sent Events (SSE) Stream
     const evtSource = new EventSource('/api/stream');
 
     evtSource.onmessage = function(event) {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === "command") {
+
+        // High frequency acoustic audio level event
+        if (msg.type === "audio") {
+          edgeAudioLevel = parseFloat(msg.level) || 0.0;
+          if (msg.state && msg.state !== currentVoiceState) {
+            updateOrbState(msg.state);
+          }
+          if (!useBrowserMic) {
+            streamSourceTag.textContent = "Edge Mic: Streaming";
+            streamSourceTag.classList.add('active');
+          }
+        } else if (msg.type === "status") {
+          updateOrbState(msg.state);
+        } else if (msg.type === "command") {
           document.getElementById('intentDisplay').textContent = msg.intent;
           document.getElementById('slotDisplay').textContent = msg.slot || "None";
           document.getElementById('confDisplay').textContent = msg.confidence.toFixed(1) + "%";
@@ -316,17 +741,12 @@
           }
           document.getElementById('timeDisplay').textContent = new Date().toLocaleTimeString();
 
-          // Add to log
+          // Add to event activity log
           const log = document.getElementById('historyList');
           const row = document.createElement('div');
           row.className = 'history-row';
           row.innerHTML = `<span><strong>${msg.intent}</strong> ${msg.slot ? '[' + msg.slot + ']' : ''}</span><span style="color: var(--text-muted);">${msg.confidence.toFixed(1)}% | ${new Date().toLocaleTimeString()}</span>`;
           log.prepend(row);
-        } else if (msg.type === "status") {
-          const pill = document.getElementById('statusPill');
-          const txt = document.getElementById('statusText');
-          pill.className = "status-pill status-" + msg.state.toLowerCase();
-          txt.textContent = msg.details || msg.state;
         } else if (msg.type === "leds") {
           updateLed('ledRed', 'ledRedPct', msg.red);
           updateLed('ledGreen', 'ledGreenPct', msg.green);
@@ -361,4 +781,3 @@
   </script>
 </body>
 </html>
-

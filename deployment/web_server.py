@@ -40,7 +40,8 @@ def sse_stream():
         subscribers.append(client_queue)
         
         # Send initial status
-        yield f"data: {json.dumps({'type': 'status', 'state': 'LISTENING', 'details': 'LISTENING FOR \"BETELGEUSE\"'})}\n\n"
+        init_json = json.dumps({'type': 'status', 'state': 'LISTENING', 'details': 'LISTENING FOR "BETELGEUSE"'})
+        yield f"data: {init_json}\n\n"
         
         try:
             while True:
@@ -70,6 +71,15 @@ def post_leds():
         "red": float(data.get("red", 0.0)),
         "green": float(data.get("green", 0.0)),
         "blue": float(data.get("blue", 0.0))
+    })
+    return jsonify({"status": "ok"})
+
+@app.route("/api/audio", methods=["POST"])
+def post_audio():
+    data = request.get_json(silent=True) or {}
+    broadcast_event("audio", {
+        "level": float(data.get("level", 0.0)),
+        "state": data.get("state", "LISTENING")
     })
     return jsonify({"status": "ok"})
 

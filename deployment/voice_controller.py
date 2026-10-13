@@ -17,6 +17,7 @@ import threading
 import argparse
 import urllib.request
 import urllib.parse
+import http.client
 import numpy as np
 import sounddevice as sd
 import pygame
@@ -148,6 +149,55 @@ def send_web_event_async(endpoint, data):
         except Exception:
             pass
     threading.Thread(target=_worker, daemon=True).start()
+
+class AudioBroadcaster:
+    """High-frequency audio level and state streamer for Web UI visualization."""
+    def __init__(self, host="127.0.0.1", port=5000):
+        self.host = host
+        self.port = port
+        self.level = 0.0
+        self.state = "LISTENING"
+        self.lock = threading.Lock()
+        self.running = True
+        self.thread = threading.Thread(target=self._loop, daemon=True)
+        self.thread.start()
+
+    def update_level(self, level):
+        with self.lock:
+            self.level = float(level)
+
+    def set_state(self, state):
+        with self.lock:
+            self.state = str(state)
+
+    def stop(self):
+        self.running = False
+
+    def _loop(self):
+        conn = None
+        while self.running:
+            try:
+                with self.lock:
+                    lvl = self.level
+                    st = self.state
+
+                payload = json.dumps({"level": lvl, "state": st})
+                if conn is None:
+                    conn = http.client.HTTPConnection(self.host, self.port, timeout=0.2)
+
+                headers = {"Content-Type": "application/json", "Connection": "keep-alive"}
+                conn.request("POST", "/api/audio", body=payload, headers=headers)
+                resp = conn.getresponse()
+                resp.read()
+            except Exception:
+                if conn is not None:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
+                time.sleep(0.1)
+            time.sleep(0.05)  # 20 Hz update rate
 
 # =====================================================================
 # 3. THREAD-SAFE AUDIO RING BUFFER
@@ -363,6 +413,7 @@ def main():
 
     buffer_size = 16000 * 4  # 4 seconds rolling buffer
     ring_buffer = AudioRingBuffer(buffer_size)
+    audio_broadcaster = AudioBroadcaster()
 
     def audio_callback(indata, frames, time_info, status):
         audio_in = indata[:, 0]
@@ -372,6 +423,12 @@ def main():
             audio_16k = scipy.signal.resample(audio_in, num_target)
         else:
             audio_16k = audio_in
+
+        # Audio level computation for abstract circle indicator
+        rms = float(np.sqrt(np.mean(audio_16k ** 2)))
+        norm_level = float(np.clip((rms - 0.002) * 8.5, 0.0, 1.0))
+        audio_broadcaster.update_level(norm_level)
+
         ring_buffer.write(audio_16k.astype(np.float32))
 
     block_size = int(mic_sr * 0.08)
@@ -414,6 +471,7 @@ def main():
 
                     if conf > 0.04:
                         print(f"\n[!] WAKE WORD DETECTED ('Betelgeuse', Conf: {conf:.2f})")
+                        audio_broadcaster.set_state("RECORDING")
                         send_web_event_async("api/status", {"state": "RECORDING", "details": "LISTENING TO COMMAND..."})
 
                         # Auto-pause music
@@ -440,6 +498,7 @@ def main():
                     samples_captured = ring_buffer.total_written - recording_start_sample
 
                 if samples_captured >= command_samples_target:
+                    audio_broadcaster.set_state("INFERENCE")
                     send_web_event_async("api/status", {"state": "INFERENCE", "details": "ANALYZING COMMAND..."})
                     state = STATE_INFERENCE
 
@@ -555,6 +614,7 @@ def main():
                 with ring_buffer.lock:
                     read_index = ring_buffer.total_written
                 state = STATE_LISTENING
+                audio_broadcaster.set_state("LISTENING")
                 send_web_event_async("api/status", {"state": "LISTENING", "details": "LISTENING FOR \"BETELGEUSE\""})
 
             time.sleep(0.01)
@@ -562,6 +622,7 @@ def main():
     except KeyboardInterrupt:
         print("\nStopping controller...")
     finally:
+        audio_broadcaster.stop()
         stream.stop()
         stream.close()
         leds.close()
