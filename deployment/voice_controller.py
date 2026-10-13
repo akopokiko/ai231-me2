@@ -339,6 +339,14 @@ def main():
             print(f"[+] Loaded custom wake word model: {ww_path}")
         except Exception as e:
             print(f"[!] Warning: OpenWakeWord could not load ({e}).")
+    else:
+        try:
+            import openwakeword
+            from openwakeword.model import Model
+            oww_model = Model(wakeword_models=["alexa", "hey_jarvis"], inference_framework='tflite')
+            print(f"[*] Custom wake word '{args.wakeword_model}' not found in deployment/. Loaded built-in fallback models ('alexa', 'hey_jarvis').")
+        except Exception as e:
+            print(f"[!] Warning: OpenWakeWord fallback models could not load ({e}).")
 
     # Audio stream configuration
     mic_device = args.mic_id
@@ -402,7 +410,7 @@ def main():
                 if oww_model and len(recent_audio) > 0:
                     audio_int16 = np.clip(recent_audio * 32767 * 2.0, -32768, 32767).astype(np.int16)
                     pred = oww_model.predict(audio_int16)
-                    conf = list(pred.values())[0] if pred else 0.0
+                    conf = max(pred.values()) if pred else 0.0
 
                     if conf > 0.04:
                         print(f"\n[!] WAKE WORD DETECTED ('Betelgeuse', Conf: {conf:.2f})")
