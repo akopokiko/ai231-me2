@@ -162,6 +162,26 @@ def prepare_unified_dataset(base_data_dir="data/voice_dataset", custom_voices_di
                     records.append(d)
                 print(f"    Added {len(df_spk)} samples from speaker '{spk}'.")
 
+    # 3b. Also scan finetune_16k directly if present
+    for alt_ft in ["finetune_16k", "data/finetune_16k"]:
+        if os.path.exists(alt_ft):
+            ft_manifest = os.path.join(alt_ft, "manifest_16k.csv")
+            if not os.path.exists(ft_manifest):
+                ft_manifest = os.path.join(alt_ft, "manifest.csv")
+            if os.path.exists(ft_manifest):
+                print(f"[*] Ingesting custom voice recordings from '{alt_ft}'...")
+                df_ft = pd.read_csv(ft_manifest)
+                for idx, row in df_ft.iterrows():
+                    d = row.to_dict()
+                    r = (idx % 10)
+                    d['split'] = "train" if r < 8 else ("val" if r == 8 else "test")
+                    p = str(d['path']).replace('\\', '/')
+                    if not p.startswith(alt_ft):
+                        p = os.path.join(alt_ft, p).replace('\\', '/')
+                    d['path'] = p
+                    records.append(d)
+                print(f"    Added {len(df_ft)} samples from '{alt_ft}'.")
+
     if not records:
         print("[-] No records gathered. Please ensure dataset downloads or custom voice recordings exist.")
         return

@@ -145,14 +145,40 @@ def save_manifest(tasks, out_dir):
 
 def package_zip(out_dir, speaker_id):
     zip_name = f"custom_voice_{speaker_id}.zip"
-    print(f"[*] Packaging recordings into {zip_name}...")
+    import glob
+    
+    # Check out_dir first
+    wav_files = glob.glob(os.path.join(out_dir, "**", "*.wav"), recursive=True)
+    target_scan_dir = out_dir
+
+    # Fallback: check finetune_16k if out_dir is empty
+    if not wav_files:
+        alt_dirs = ["finetune_16k", "../finetune_16k"]
+        for alt in alt_dirs:
+            if os.path.exists(alt):
+                alt_wavs = glob.glob(os.path.join(alt, "**", "*.wav"), recursive=True)
+                if alt_wavs:
+                    print(f"[*] Detected {len(alt_wavs)} audio file(s) in '{alt}'. Packaging from '{alt}'...")
+                    target_scan_dir = alt
+                    wav_files = alt_wavs
+                    break
+
+    if not wav_files:
+        print(f"[!] WARNING: No .wav audio files found in '{out_dir}' or 'finetune_16k'.")
+        print("    Did you record under a different Speaker ID or directory?")
+        return
+
+    print(f"[*] Packaging {len(wav_files)} recordings from '{target_scan_dir}' into {zip_name}...")
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for root, _, files in os.walk(out_dir):
+        for root, _, files in os.walk(target_scan_dir):
             for file in files:
                 abs_path = os.path.join(root, file)
-                rel_path = os.path.relpath(abs_path, start=out_dir)
+                rel_path = os.path.relpath(abs_path, start=target_scan_dir)
                 zf.write(abs_path, arcname=os.path.join(speaker_id, rel_path))
-    print(f"[+] Created {zip_name} ready to transfer to DGX 'data/custom_voices/'!")
+
+    size_mb = os.path.getsize(zip_name) / (1024 * 1024)
+    print(f"[+] Successfully created {zip_name} ({size_mb:.2f} MB, {len(wav_files)} audio files)!")
+    print(f"    Transfer {zip_name} to DGX and unzip into 'data/custom_voices/'!")
 
 def run_sequential_recording(tasks, out_dir, speaker_id):
     recorded = []
