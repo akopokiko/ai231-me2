@@ -147,6 +147,8 @@ def prepare_unified_dataset(base_data_dir="data/voice_dataset", custom_voices_di
         for spk in speaker_dirs:
             spk_dir = os.path.join(custom_voices_dir, spk)
             spk_manifest = os.path.join(spk_dir, "manifest.csv")
+            if not os.path.exists(spk_manifest):
+                spk_manifest = os.path.join(spk_dir, "manifest_16k.csv")
             if os.path.exists(spk_manifest):
                 print(f"[*] Ingesting custom speaker '{spk}' manifest: {spk_manifest}...")
                 df_spk = pd.read_csv(spk_manifest)
