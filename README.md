@@ -262,3 +262,4 @@ Physical GPIO pins used on Raspberry Pi 5:
 - **Green LED**: GPIO 27 (Pin 13)
 - **Blue LED**: GPIO 22 (Pin 15)
 - **Ground**: Pin 9 or 14
+

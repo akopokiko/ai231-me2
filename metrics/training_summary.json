@@ -1,0 +1,9 @@
+{
+  "best_epoch": 25,
+  "best_val_exact_match": 88.6178861788618,
+  "final_train_loss": 0.5444,
+  "final_val_loss": 0.474,
+  "final_val_intent_acc": 93.71,
+  "final_val_slot_acc": 92.79,
+  "final_val_exact_match": 88.62
+}

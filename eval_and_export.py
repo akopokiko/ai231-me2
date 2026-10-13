@@ -62,6 +62,7 @@ def quantize_to_int8(input_path="deployment/vcm.onnx", output_path="deployment/v
     quantize_dynamic(
         model_input=input_path,
         model_output=output_path,
+        op_types_to_quantize=['MatMul', 'Gemm'],
         weight_type=QuantType.QInt8
     )
     size_mb = os.path.getsize(output_path) / (1024 * 1024)
@@ -73,19 +74,14 @@ def evaluate_onnx_session(session, test_loader, num_intents, num_slots):
     all_intent_targets = []
     all_slot_preds = []
     all_slot_targets = []
-    latencies = []
 
     input_name = session.get_inputs()[0].name
 
     for mels, intent_targets, slot_targets in test_loader:
         mels_np = mels.numpy()
-
-        t0 = time.perf_counter()
         outputs = session.run(None, {input_name: mels_np})
-        t1 = time.perf_counter()
-        latencies.append((t1 - t0) * 1000.0 / len(mels_np))
-
         intent_logits, slot_logits = outputs[0], outputs[1]
+
         pred_intents = np.argmax(intent_logits, axis=1)
         pred_slots = np.argmax(slot_logits, axis=1)
 
@@ -102,6 +98,16 @@ def evaluate_onnx_session(session, test_loader, num_intents, num_slots):
     intent_match = (all_intent_preds == all_intent_targets)
     slot_match = (all_slot_preds == all_slot_targets)
     exact_match = intent_match & slot_match
+
+    # Benchmark single-sample CPU latency over 50 iterations
+    dummy_single = np.random.randn(1, 1, 64, 251).astype(np.float32)
+    for _ in range(5):  # warmup
+        session.run(None, {input_name: dummy_single})
+    latencies = []
+    for _ in range(50):
+        t0 = time.perf_counter()
+        session.run(None, {input_name: dummy_single})
+        latencies.append((time.perf_counter() - t0) * 1000.0)
 
     return {
         "intent_accuracy": float(np.mean(intent_match) * 100.0),
@@ -136,6 +142,8 @@ def main():
     parser.add_argument("--manifest", type=str, default="data/manifest_unified.csv", help="Test manifest CSV")
     parser.add_argument("--labels", type=str, default="data/intents.json", help="Intents mapping JSON")
     parser.add_argument("--slots", type=str, default="data/slots.json", help="Slots mapping JSON")
+    parser.add_argument("--batch_size", type=int, default=32, help="Evaluation batch size")
+    parser.add_argument("--num_workers", type=int, default=8, help="DataLoader worker processes")
     args = parser.parse_args()
 
     if not os.path.exists(args.checkpoint):
@@ -156,7 +164,7 @@ def main():
     num_slots = len(slot_values)
 
     print(f"[*] Loading checkpoint: {args.checkpoint}...")
-    checkpoint = torch.load(args.checkpoint, map_location="cpu")
+    checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     model = BCResNet(num_intents=num_intents, num_slots=num_slots)
     state_dict = checkpoint["model_state_dict"] if "model_state_dict" in checkpoint else checkpoint
     model.load_state_dict(state_dict)
@@ -180,7 +188,7 @@ def main():
         augment=False,
         device="cpu"
     )
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     print(f"    Test set size: {len(test_dataset)} samples.")
 
     # Evaluate FP32 ONNX

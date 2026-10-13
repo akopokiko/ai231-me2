@@ -1,0 +1,17 @@
+{
+  "test_samples": 1828,
+  "fp32_onnx": {
+    "intent_accuracy": 96.44420131291028,
+    "slot_accuracy": 96.38949671772428,
+    "exact_match_accuracy": 93.54485776805251,
+    "avg_latency_ms": 6.22129175812006,
+    "model_size_mb": 0.15
+  },
+  "int8_onnx": {
+    "intent_accuracy": 96.49890590809628,
+    "slot_accuracy": 96.44420131291028,
+    "exact_match_accuracy": 93.6542669584245,
+    "avg_latency_ms": 7.56495701149106,
+    "model_size_mb": 0.14
+  }
+}
