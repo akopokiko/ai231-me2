@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Control Dashboard - Betelgeuse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --red: #ef4444;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 { font-size: 20px; font-weight: 700; }
+    .brand span { color: var(--accent); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .status-listening .pulse-dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .status-recording .pulse-dot { background: var(--amber); box-shadow: 0 0 12px var(--amber); animation: pulse 1s infinite; }
+    .status-inference .pulse-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    /* Command Card */
+    .intent-display {
+      font-size: 28px;
+      font-weight: 700;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+    .slot-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #0f172a;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .confidence-bar-bg {
+      height: 8px;
+      background: #0f172a;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .confidence-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    /* LED Indicators */
+    .leds-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 16px 0;
+    }
+    .led-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .led-bulb {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #334155;
+      border: 3px solid #1e293b;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .led-red.lit {
+      background: #ef4444;
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.8), inset 0 0 8px #fca5a5;
+    }
+    .led-green.lit {
+      background: #22c55e;
+      box-shadow: 0 0 24px rgba(34, 197, 94, 0.8), inset 0 0 8px #86efac;
+    }
+    .led-blue.lit {
+      background: #3b82f6;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.8), inset 0 0 8px #93c5fd;
+    }
+    .led-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .led-pct {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+    }
+    /* Music Card */
+    .music-state {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .track-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    /* History table */
+    .history-card {
+      grid-column: 1 / -1;
+    }
+    .history-list {
+      max-height: 240px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #0f172a;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      <h1>Voice Control <span>// Betelgeuse</span></h1>
+    </div>
+    <div id="statusPill" class="status-pill status-listening">
+      <div class="pulse-dot"></div>
+      <span id="statusText">LISTENING FOR "BETELGEUSE"</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Recognized Command Card -->
+    <div class="card">
+      <div class="card-title">Latest Command</div>
+      <div id="intentDisplay" class="intent-display">READY</div>
+      <div class="slot-row">
+        <span style="color: var(--text-muted);">Slot Value:</span>
+        <span id="slotDisplay" style="font-weight: 600;">None</span>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+          <span>Confidence:</span>
+          <span id="confDisplay">0%</span>
+        </div>
+        <div class="confidence-bar-bg">
+          <div id="confBar" class="confidence-bar-fill"></div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+        <span>Latency: <strong id="latencyDisplay" style="color: var(--text);">-- ms</strong></span>
+        <span>Timestamp: <span id="timeDisplay">--</span></span>
+      </div>
+    </div>
+
+    <!-- Virtual GPIO LEDs Card -->
+    <div class="card">
+      <div class="card-title">Virtual GPIO LEDs (Pins 17, 27, 22)</div>
+      <div class="leds-container">
+        <!-- Red -->
+        <div class="led-wrapper">
+          <div id="ledRed" class="led-bulb led-red"></div>
+          <span class="led-label">RED (17)</span>
+          <span id="ledRedPct" class="led-pct">0%</span>
+        </div>
+        <!-- Green -->
+        <div class="led-wrapper">
+          <div id="ledGreen" class="led-bulb led-green"></div>
+          <span class="led-label">GREEN (27)</span>
+          <span id="ledGreenPct" class="led-pct">0%</span>
+        </div>
+        <!-- Blue -->
+        <div class="led-wrapper">
+          <div id="ledBlue" class="led-bulb led-blue"></div>
+          <span class="led-label">BLUE (22)</span>
+          <span id="ledBluePct" class="led-pct">0%</span>
+        </div>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); text-align: center;">
+        Live hardware state synchronized with Raspberry Pi 5 GPIO & Laptop emulator.
+      </p>
+    </div>
+
+    <!-- Music Player & Weather Card -->
+    <div class="card">
+      <div class="card-title">Music & Live Context</div>
+      <div class="music-state">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </svg>
+        <div>
+          <div id="trackDisplay" class="track-name">music1.mp3</div>
+          <span id="musicStatus" style="font-size: 12px; color: var(--text-muted);">Stopped</span>
+        </div>
+      </div>
+      <div class="slot-row" style="margin-top: 8px;">
+        <span style="color: var(--text-muted);">Volume:</span>
+        <span id="volumeDisplay" style="font-weight: 600;">80%</span>
+      </div>
+      <div class="slot-row">
+        <span style="color: var(--text-muted);">Live Context:</span>
+        <span id="liveContextDisplay" style="color: #38bdf8;">Standby</span>
+      </div>
+    </div>
+
+    <!-- Event History -->
+    <div class="card history-card">
+      <div class="card-title">Event Activity Log</div>
+      <div id="historyList" class="history-list">
+        <div class="history-row" style="color: var(--text-muted);">
+          <span>[SYSTEM] Dashboard connected. Waiting for commands...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const evtSource = new EventSource('/api/stream');
+
+    evtSource.onmessage = function(event) {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "command") {
+          document.getElementById('intentDisplay').textContent = msg.intent;
+          document.getElementById('slotDisplay').textContent = msg.slot || "None";
+          document.getElementById('confDisplay').textContent = msg.confidence.toFixed(1) + "%";
+          document.getElementById('confBar').style.width = Math.min(100, msg.confidence) + "%";
+          if (msg.latency_ms) {
+            document.getElementById('latencyDisplay').textContent = msg.latency_ms.toFixed(0) + " ms";
+          }
+          document.getElementById('timeDisplay').textContent = new Date().toLocaleTimeString();
+
+          // Add to log
+          const log = document.getElementById('historyList');
+          const row = document.createElement('div');
+          row.className = 'history-row';
+          row.innerHTML = `<span><strong>${msg.intent}</strong> ${msg.slot ? '[' + msg.slot + ']' : ''}</span><span style="color: var(--text-muted);">${msg.confidence.toFixed(1)}% | ${new Date().toLocaleTimeString()}</span>`;
+          log.prepend(row);
+        } else if (msg.type === "status") {
+          const pill = document.getElementById('statusPill');
+          const txt = document.getElementById('statusText');
+          pill.className = "status-pill status-" + msg.state.toLowerCase();
+          txt.textContent = msg.details || msg.state;
+        } else if (msg.type === "leds") {
+          updateLed('ledRed', 'ledRedPct', msg.red);
+          updateLed('ledGreen', 'ledGreenPct', msg.green);
+          updateLed('ledBlue', 'ledBluePct', msg.blue);
+        } else if (msg.type === "music") {
+          document.getElementById('musicStatus').textContent = msg.status.toUpperCase();
+          if (msg.track) document.getElementById('trackDisplay').textContent = msg.track;
+          if (msg.volume !== undefined) {
+            document.getElementById('volumeDisplay').textContent = Math.round(msg.volume * 100) + "%";
+          }
+        } else if (msg.type === "context") {
+          document.getElementById('liveContextDisplay').textContent = msg.text || "Standby";
+        }
+      } catch (e) {
+        console.error("Failed to parse SSE event", e);
+      }
+    };
+
+    function updateLed(elementId, pctId, value) {
+      const el = document.getElementById(elementId);
+      const pctEl = document.getElementById(pctId);
+      const val = parseFloat(value) || 0.0;
+      pctEl.textContent = Math.round(val * 100) + "%";
+      if (val > 0.01) {
+        el.classList.add('lit');
+        el.style.opacity = Math.max(0.3, val);
+      } else {
+        el.classList.remove('lit');
+        el.style.opacity = 1.0;
+      }
+    }
+  </script>
+</body>
+</html>
+

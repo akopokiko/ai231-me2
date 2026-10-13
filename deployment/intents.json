@@ -1,0 +1,22 @@
+[
+  "ALARM",
+  "BRIGHTNESS",
+  "CALL",
+  "COLOR",
+  "CREATE_REMINDER",
+  "LIGHT_OFF",
+  "LIGHT_ON",
+  "LIST_REMINDERS",
+  "MESSAGE",
+  "NEXT",
+  "PAUSE",
+  "PLAY_MUSIC",
+  "STOP",
+  "TEMPERATURE",
+  "TIME",
+  "TIMER",
+  "UNKNOWN",
+  "VOLUME_DOWN",
+  "VOLUME_UP",
+  "WEATHER"
+]

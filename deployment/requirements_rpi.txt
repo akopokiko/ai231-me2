@@ -1,0 +1,15 @@
+# Voice Control Model - Raspberry Pi 5 Requirements
+# Raspberry Pi OS Bookworm uses lgpio for RP1 chip GPIO support
+gpiozero>=2.0
+rpi-lgpio>=0.6
+numpy>=1.24.0
+sounddevice>=0.4.6
+soundfile>=0.12.1
+scipy>=1.10.0
+librosa>=0.10.1
+onnxruntime>=1.16.0
+openwakeword>=0.6.0
+pygame>=2.5.0
+flask>=3.0.0
+requests>=2.31.0
+
